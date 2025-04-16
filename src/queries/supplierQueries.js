@@ -6,25 +6,17 @@ const supplierQueries = {
     console.log("shopId", shopId);
     const { data, error } = await supabase
       .from("suppliers")
-      .select(
-        `
-        id,
-        name,
-        mobile,
-        address,
-        email_id,
-        gst_number,
-        updated_at
-      `
-      )
+      .select("id, name, mobile, address, email_id, gst_number, updated_at")
       .eq("created_id", userId)
       .eq("shop_id", shopId)
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      .single();
 
     if (error) {
       console.error("Error fetching suppliers:", error);
       return null;
     }
+    console.log("data", data);
     return data;
   },
 };
