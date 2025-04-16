@@ -1,4 +1,4 @@
-const db = require("../models/db");
+const profileQueries = require("../queries/profileQueries");
 
 const profileController = {
   updateProfile: async (req, res, next) => {
@@ -10,46 +10,22 @@ const profileController = {
       dob,
       address,
       role,
-      gst_number,
       profile_image,
     } = req.body;
+
     try {
       // Validate required fields
       if (!user_id || !name) {
         return res.status(400).json({
           message: "Missing required fields",
-          description: "user_id and name are required",
+          description: "Name is required.",
           data: null,
         });
       }
 
-      const result = await db.query(
-        `UPDATE users 
-         SET email_id = COALESCE($1, email_id),
-             name = COALESCE($2, name),
-             gender = COALESCE($3, gender),
-             dob = COALESCE($4, dob),
-             address = COALESCE($5, address),
-             role = COALESCE($6, role),
-             gst_number = COALESCE($7, gst_number),
-             profile_image = COALESCE($8, profile_image),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = $9
-         RETURNING *`,
-        [
-          email_id,
-          name,
-          gender,
-          dob,
-          address,
-          role,
-          gst_number,
-          profile_image,
-          user_id,
-        ]
-      );
-
-      if (result.rows.length === 0) {
+      // Check if user exists
+      const existingUser = await profileQueries.getUserById(user_id);
+      if (!existingUser) {
         return res.status(404).json({
           message: "User not found",
           description: "No user exists with the provided user_id",
@@ -57,13 +33,51 @@ const profileController = {
         });
       }
 
+      // Update profile
+      const updatedUser = await profileQueries.updateUserProfile(user_id, {
+        email_id,
+        name,
+        gender,
+        dob,
+        address,
+        role,
+        profile_image,
+      });
+
+      if (!updatedUser) {
+        return res.status(400).json({
+          message: "Profile update failed",
+          description: "Failed to update profile",
+          data: null,
+        });
+      }
+
+      const { id, password, created_at, updated_at, ...rest } = updatedUser;
+      const { shop_id, name: user_name } = rest;
+      const isProfileComplete = user_name?.trim()?.length > 0;
+      const isShopLinked = shop_id && shop_id.length > 0;
       return res.status(200).json({
         message: "Profile updated successfully",
         description: "User profile has been updated",
-        data: result.rows[0],
+        data: {
+          user_id: id,
+          is_profile_completed: isProfileComplete,
+          is_shop_linked: isShopLinked,
+          ...rest,
+        },
       });
     } catch (error) {
       console.error("Error updating profile:", error);
+
+      // Handle Supabase specific errors
+      if (error.code === "PGRST116") {
+        return res.status(404).json({
+          message: "User not found",
+          description: "No user exists with the provided user_id",
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         message: "Server Error",
         description: error.message,
