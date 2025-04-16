@@ -2,6 +2,8 @@ const supabase = require("../config/supabase");
 
 const supplierQueries = {
   async getSuppliersByUserAndShop(userId, shopId) {
+    console.log("userId", userId);
+    console.log("shopId", shopId);
     const { data, error } = await supabase
       .from("suppliers")
       .select(
