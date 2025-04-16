@@ -4,5 +4,6 @@ const supplierController = require("../controllers/supplierController");
 
 // Auth routes
 router.post("/addSupplier", supplierController.addSupplier);
+router.get("/getAllSuppliers", supplierController.getAllSuppliers);
 
 module.exports = router;

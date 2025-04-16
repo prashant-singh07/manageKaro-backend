@@ -1,0 +1,30 @@
+const supabase = require("../config/supabase");
+
+const supplierQueries = {
+  async getSuppliersByUserAndShop(userId, shopId) {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select(
+        `
+        id,
+        name,
+        mobile,
+        address,
+        email_id,
+        gst_number,
+        updated_at
+      `
+      )
+      .eq("created_id", userId)
+      .eq("shop_id", shopId)
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching suppliers:", error);
+      return null;
+    }
+    return data;
+  },
+};
+
+module.exports = supplierQueries;
