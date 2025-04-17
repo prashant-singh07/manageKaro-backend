@@ -2,39 +2,6 @@ const db = require("../models/db");
 const supplierQueries = require("../queries/supplierQueries");
 
 const supplierController = {
-  // addSupplier: async (req, res, next) => {
-  //   const { user_id, shop_id, name, mobile, address, email, gst } = req.body;
-  //   try {
-  //     // Validate required fields
-  //     if (!user_id || !shop_id || !name || !mobile || !address) {
-  //       return res.status(400).json({
-  //         message: "Missing required fields",
-  //         description:
-  //           "user_id, shop_id, name, mobile and address are required",
-  //         data: null,
-  //       });
-  //     }
-
-  //     const result = await db.query(
-  //       "INSERT INTO suppliers (created_id, shop_id, name, mobile, address, email_id, gst) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-  //       [user_id, shop_id, name, mobile, address, email, gst]
-  //     );
-
-  //     res.status(201).json({
-  //       message: "Supplier added successfully",
-  //       description: "New supplier has been created",
-  //       data: result.rows[0],
-  //     });
-  //   } catch (error) {
-  //     console.error("Error creating supplier:", error);
-  //     res.status(500).json({
-  //       message: "Server Error",
-  //       description: error.message,
-  //       data: null,
-  //     });
-  //   }
-  // },
-
   getAllSuppliers: async (req, res, next) => {
     const { user_id, shop_id } = req.body;
     try {
@@ -66,6 +33,52 @@ const supplierController = {
       });
     } catch (error) {
       console.error("Error fetching suppliers:", error);
+      return res.status(500).json({
+        message: "Server Error",
+        description: error.message,
+        data: null,
+      });
+    }
+  },
+
+  addSupplier: async (req, res, next) => {
+    const { user_id, shop_id, name, mobile, address, email, gst } = req.body;
+    try {
+      // Validate required fields
+      if (!user_id || !shop_id || !name || !mobile || !address) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          description:
+            "user_id, shop_id, supplier_id, name, mobile, and address are required",
+          data: null,
+        });
+      }
+
+      const result = await supplierQueries.addSupplier(
+        user_id,
+        shop_id,
+        name,
+        mobile,
+        address,
+        email,
+        gst
+      );
+
+      if (!result) {
+        return res.status(404).json({
+          message: "Supplier not found",
+          description: "Supplier with the given ID not found",
+          data: null,
+        });
+      }
+
+      return res.status(200).json({
+        message: "Supplier updated successfully",
+        description: "Supplier details have been updated",
+        data: result,
+      });
+    } catch (error) {
+      console.error("Error updating supplier:", error);
       return res.status(500).json({
         message: "Server Error",
         description: error.message,

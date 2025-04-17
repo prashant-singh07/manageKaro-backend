@@ -17,7 +17,29 @@ const supplierQueries = {
       console.error("Error fetching suppliers:", error);
       return null;
     }
-    console.log("data", data);
+    console.log("getSuppliersByUserAndShop added successfully", data);
+    return data;
+  },
+
+  async addSupplier(userId, shopId, name, mobile, address, email, gst) {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .insert({
+        created_id: userId,
+        shop_id: shopId,
+        name: name,
+        mobile: mobile,
+        address: address,
+        email_id: email,
+        gst_number: gst,
+      })
+      .select();
+
+    if (error) {
+      console.error("Error addSupplier:", error);
+      return null;
+    }
+    console.log("Data addSupplier", data);
     return data;
   },
 };
