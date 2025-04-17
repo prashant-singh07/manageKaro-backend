@@ -21,7 +21,15 @@ const supplierQueries = {
     return data;
   },
 
-  async addSupplier(userId, shopId, name, mobile, address, email, gst) {
+  async addSupplier(
+    userId,
+    shopId,
+    name,
+    mobile,
+    address,
+    email_id,
+    gst_number
+  ) {
     const { data, error } = await supabase
       .from("suppliers")
       .insert({
@@ -30,10 +38,10 @@ const supplierQueries = {
         name: name,
         mobile: mobile,
         address: address,
-        email_id: email,
-        gst_number: gst,
+        email_id: email_id,
+        gst_number: gst_number,
       })
-      .select();
+      .select(`id, name, mobile, address, email_id, gst_number,updated_at`);
 
     if (error) {
       console.error("Error addSupplier:", error);

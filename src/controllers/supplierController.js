@@ -42,7 +42,8 @@ const supplierController = {
   },
 
   addSupplier: async (req, res, next) => {
-    const { user_id, shop_id, name, mobile, address, email, gst } = req.body;
+    const { user_id, shop_id, name, mobile, address, email_id, gst_number } =
+      req.body;
     try {
       // Validate required fields
       if (!user_id || !shop_id || !name || !mobile || !address) {
@@ -54,17 +55,17 @@ const supplierController = {
         });
       }
 
-      const result = await supplierQueries.addSupplier(
+      const addedSupplier = await supplierQueries.addSupplier(
         user_id,
         shop_id,
         name,
         mobile,
         address,
-        email,
-        gst
+        email_id,
+        gst_number
       );
 
-      if (!result) {
+      if (!addedSupplier) {
         return res.status(404).json({
           message: "Supplier not found",
           description: "Supplier with the given ID not found",
@@ -73,9 +74,9 @@ const supplierController = {
       }
 
       return res.status(200).json({
-        message: "Supplier updated successfully",
-        description: "Supplier details have been updated",
-        data: result,
+        message: "Supplier added successfully",
+        description: "New supplier has been created",
+        data: addedSupplier,
       });
     } catch (error) {
       console.error("Error updating supplier:", error);
