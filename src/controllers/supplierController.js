@@ -9,7 +9,7 @@ const supplierController = {
       if (!shop_id || !user_id) {
         return res.status(400).json({
           message: "Missing required fields",
-          description: "user_id or shop_id is required",
+          description: "user_id, shop_id is required",
           data: null,
         });
       }
@@ -46,11 +46,10 @@ const supplierController = {
       req.body;
     try {
       // Validate required fields
-      if (!user_id || !shop_id || !name || !mobile || !address) {
+      if (!user_id || !shop_id || !name || !mobile) {
         return res.status(400).json({
           message: "Missing required fields",
-          description:
-            "user_id, shop_id, supplier_id, name, mobile, and address are required",
+          description: "user_id, shop_id, name, mobile are required",
           data: null,
         });
       }
