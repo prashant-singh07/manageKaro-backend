@@ -3,9 +3,8 @@ const router = express.Router();
 const skuController = require("../controllers/skuController");
 
 // Supplier routes
-router.post("/addSku", skuController.addSku);
+router.post("/add-new-sku", skuController.addNewSku);
 
-router.get("/", skuController.getAllSkus);
-router.get("/:sku_id", skuController.getSkuById);
+router.post("/get-all-skus", skuController.getAllSkus);
 
 module.exports = router;

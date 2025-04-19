@@ -10,8 +10,8 @@ const supplierQueries = {
       .select("id, name, mobile, address, email_id, gst_number, updated_at")
       .eq("created_id", userId)
       .eq("shop_id", shopId)
-      .order("updated_at", { ascending: false })
-      .maybeSingle();
+      .order("updated_at", { ascending: false });
+    // .maybeSingle();
 
     if (error) {
       console.error("Error fetching suppliers:", error);

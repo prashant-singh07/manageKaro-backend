@@ -1,7 +1,7 @@
 const supabase = require("../config/supabase");
 
 const skuQueries = {
-  async getSkusByShop(shopId) {
+  async getSkusByUserAndShop(userId, shopId) {
     const { data, error } = await supabase
       .from("sku")
       .select(
@@ -10,39 +10,44 @@ const skuQueries = {
         name,
         type,
         kind,
-        is_active,
+        size,
+        is_live,
         ideal_selling_price,
-        created_at,
         updated_at
       `
       )
+      .eq("created_id", userId)
       .eq("shop_id", shopId)
-      .order("created_at", { ascending: false });
+      .order("updated_at", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.log("Error getSkusByUserAndShop", error);
+      return null;
+    }
+    console.log("Data getSkusByUserAndShop", data);
     return data;
   },
 
-  async getSkuById(skuId, shopId) {
+  async addNewSku(userId, shopId, name, type, kind, size, ideal_selling_price) {
     const { data, error } = await supabase
       .from("sku")
-      .select(
-        `
-        id,
+      .insert({
+        created_id: userId,
+        shop_id: shopId,
         name,
         type,
         kind,
-        is_active,
+        size,
         ideal_selling_price,
-        created_at,
-        updated_at
-      `
-      )
-      .eq("id", skuId)
-      .eq("shop_id", shopId)
+      })
+      .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.log("Error addNewSku", error);
+      return null;
+    }
+    console.log("Data addNewSku", data);
     return data;
   },
 };
