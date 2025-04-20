@@ -3,6 +3,6 @@ const router = express.Router();
 const purchaseController = require("../controllers/purchaseController");
 
 // Purchase routes
-router.post("/addPurchase", purchaseController.addPurchase);
+router.post("/create-purchase-order", purchaseController.createPurchaseOrder);
 router.get("/getPurchase", purchaseController.getPurchase);
 module.exports = router;
