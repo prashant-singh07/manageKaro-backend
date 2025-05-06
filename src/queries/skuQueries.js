@@ -50,6 +50,21 @@ const skuQueries = {
     console.log("Data addNewSku", data);
     return data;
   },
+
+  async getSkuDetails(skuId) {
+    const { data, error } = await supabase
+      .from("sku")
+      .select("*")
+      .eq("id", skuId)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Error getSkuDetails", error);
+      return null;
+    }
+    console.log("Data getSkuDetails", data);
+    return data;
+  },
 };
 
 module.exports = skuQueries;

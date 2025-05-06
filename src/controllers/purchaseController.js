@@ -1,5 +1,6 @@
 const purchaseQueries = require("../queries/purchaseQueries");
-
+const supplierQueries = require("../queries/supplierQueries");
+const skuQueries = require("../queries/skuQueries");
 const purchaseController = {
   createPurchaseOrder: async (req, res, next) => {
     const {
@@ -83,27 +84,98 @@ const purchaseController = {
     }
   },
 
-  getPurchase: async (req, res, next) => {
+  getAllPurchase: async (req, res, next) => {
     const { user_id, shop_id } = req.body;
     try {
-      const purchaseResult = await db.query(
-        "SELECT * FROM purchase WHERE created_id = $1 AND shop_id = $2",
-        [user_id, shop_id]
+      if (!user_id || !shop_id) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          description: "user_id and shop_id are required",
+          data: null,
+        });
+      }
+
+      const purchaseResult = await purchaseQueries.getAllPurchase(
+        user_id,
+        shop_id
       );
-      if (purchaseResult.rows.length === 0) {
+      if (!purchaseResult || purchaseResult.length === 0) {
         return res.status(400).json({
           message: "No Purchase Order found",
           description: "No Purchase Order found",
           data: null,
         });
       }
-      res.status(200).json({
-        message: "Purchase Order found",
-        description: "Purchase Order found",
-        data: purchaseResult.rows,
+
+      // Fetch supplier data for each purchase
+      const purchaseResultWithSupplier = await Promise.all(
+        purchaseResult.map(async (purchase) => {
+          const supplierData = await supplierQueries.getSupplierById(
+            purchase.supplier_id
+          );
+          return {
+            ...purchase,
+            supplier: supplierData || null,
+          };
+        })
+      );
+
+      return res.status(200).json({
+        message: "Purchase orders fetched successfully",
+        description: "Purchase orders fetched successfully",
+        data: purchaseResultWithSupplier,
       });
     } catch (error) {
-      next(error);
+      console.error("Error fetching purchase orders:", error);
+      res.status(500).json({
+        message: "Server Error",
+        description: error.message,
+        data: null,
+      });
+    }
+  },
+
+  getPurchaseDetails: async (req, res, next) => {
+    const { po_id } = req.body;
+    try {
+      if (!po_id) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          description: "po_id is required",
+          data: null,
+        });
+      }
+
+      const purchaseDetails = await purchaseQueries.getPurchaseDetails(po_id);
+      if (!purchaseDetails) {
+        return res.status(400).json({
+          message: "Purchase details not found",
+          description: "Purchase details not found",
+          data: null,
+        });
+      }
+
+      const purchaseDetailsWithSku = await Promise.all(
+        purchaseDetails.map(async (item) => {
+          const skuData = await skuQueries.getSkuDetails(item.sku_id);
+          return {
+            ...item,
+            sku: skuData || null,
+          };
+        })
+      );
+      return res.status(200).json({
+        message: "Purchase details fetched successfully",
+        description: "Purchase details fetched successfully",
+        data: purchaseDetailsWithSku,
+      });
+    } catch (error) {
+      console.error("Error fetching purchase details:", error);
+      res.status(500).json({
+        message: "Server Error",
+        description: error.message,
+        data: null,
+      });
     }
   },
 };

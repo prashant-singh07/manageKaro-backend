@@ -1,16 +1,66 @@
 const db = require("../models/db");
+const saleQueries = require("../queries/saleQueries");
 // const { isEmpty } = require("lodash");
 
 const saleController = {
-  addSales: async (req, res, next) => {
+  getAllSales: async (req, res, next) => {
+    const { user_id, shop_id } = req.body;
+    try {
+      if (!user_id || !shop_id) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          description: "user_id and shop_id are required",
+          data: null,
+        });
+      }
+
+      const salesResult = await saleQueries.getAllSales(user_id, shop_id);
+      if (!salesResult || salesResult.length === 0) {
+        return res.status(400).json({
+          message: "No Sales Order found",
+          description: "No Sales Order found",
+          data: null,
+        });
+      }
+
+      // Fetch supplier data for each purchase
+      // const purchaseResultWithSupplier = await Promise.all(
+      //   salesResult.map(async (purchase) => {
+      //     const supplierData = await supplierQueries.getSupplierById(
+      //       purchase.supplier_id
+      //     );
+      //     return {
+      //       ...purchase,
+      //       supplier: supplierData || null,
+      //     };
+      //   })
+      // );
+
+      return res.status(200).json({
+        message: "Sales orders fetched successfully",
+        description: "Sales orders fetched successfully",
+        data: salesResult,
+      });
+    } catch (error) {
+      console.error("Error fetching sales orders:", error);
+      res.status(500).json({
+        message: "Server Error",
+        description: error.message,
+        data: null,
+      });
+    }
+  },
+  createSaleOrder: async (req, res, next) => {
     const {
       user_id,
       shop_id,
-      customer_mobile,
       customer_name,
+      customer_mobile,
       sale_date,
+      sale_amount,
+      sale_quantity,
       payment_mode,
-      sale_items,
+      sales_items,
     } = req.body;
     try {
       if (
@@ -18,9 +68,11 @@ const saleController = {
         !shop_id ||
         !customer_mobile ||
         !customer_name ||
-        !payment_mode ||
         !sale_date ||
-        !sale_items
+        !sale_amount ||
+        !sale_quantity ||
+        !payment_mode ||
+        !sales_items
       ) {
         return res.status(400).json({
           message: "Missing required fields",
@@ -30,82 +82,46 @@ const saleController = {
         });
       }
 
-      const sale_quantity = sale_items.reduce(
-        (acc, item) => acc + item.quantity,
-        0
+      const salesResult = await saleQueries.createSaleOrder(
+        user_id,
+        shop_id,
+        customer_name,
+        customer_mobile,
+        sale_date,
+        sale_amount,
+        sale_quantity,
+        payment_mode
       );
-
-      const sale_amount = sale_items.reduce(
-        (acc, item) => acc + item.selling_price * item.quantity,
-        0
-      );
-
-      const sale_discount = sale_items.reduce(
-        (acc, item) => acc + item.ideal_selling_price - item.selling_price,
-        0
-      );
-
-      // 1. Ch
-      // eck if
-      // user already exists
-      const saleResult = await db.query(
-        "INSERT INTO sales (created_id, shop_id, customer_mobile, customer_name, sale_date, payment_mode, sale_amount, sale_discount, sale_quantity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
-        [
-          user_id,
-          shop_id,
-          customer_mobile,
-          customer_name,
-          sale_date,
-          payment_mode,
-          sale_amount,
-          sale_discount,
-          sale_quantity,
-        ]
-      );
-
-      sale_items.forEach(async (item, index) => {
-        const sale_items_result = await db.query(
-          "INSERT INTO salesitems ( sale_id, sku_id, quantity, selling_price, discount) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-          [
-            saleResult.rows[0].id,
-            item.sku_id,
-            item.quantity,
-            item.selling_price,
-            item.ideal_selling_price - item.selling_price,
-          ]
-        );
-      });
-
-      res.status(201).json({
-        message: "Sales added successfully",
-        description: "Sales added successfully",
-        data: saleResult.rows[0],
-      });
-    } catch (err) {
-      next(err);
-    }
-  },
-  getSales: async (req, res, next) => {
-    const { user_id, shop_id } = req.body;
-    try {
-      const saleResult = await db.query(
-        "SELECT * FROM sales WHERE created_id = $1 AND shop_id = $2",
-        [user_id, shop_id]
-      );
-      if (saleResult.rows.length === 0) {
+      if (!salesResult) {
         return res.status(400).json({
-          message: "No Sales found",
-          description: "No Sales found",
+          message: "Failed to create sale order",
+          description: "Failed to create sale order",
           data: null,
         });
       }
-      res.status(200).json({
-        message: "Sales returned successfully",
-        description: "Sales returned successfully",
-        data: saleResult.rows,
+      const salesItems = sales_items.map((item) => ({
+        created_id: user_id,
+        sales_id: salesResult.id,
+        sku_id: item.sku_id,
+        quantity: item.quantity,
+        selling_price: item.selling_price,
+      }));
+      const saleItemsResult = await saleQueries.createSaleItems(salesItems);
+
+      if (!saleItemsResult) {
+        return res.status(400).json({
+          message: "Failed to create sale order item",
+          description: "Failed to create sale order item",
+          data: null,
+        });
+      }
+      return res.status(200).json({
+        message: "Sale order created successfully",
+        description: "Sale order created successfully",
+        data: { ...salesResult, sale_items: saleItemsResult },
       });
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(err);
     }
   },
 };

@@ -3,6 +3,7 @@ const router = express.Router();
 const saleController = require("../controllers/saleController");
 
 // Auth routes
-router.post("/addSales", saleController.addSales);
-router.get("/getSales", saleController.getSales);
+router.post("/get-all-sales", saleController.getAllSales);
+router.post("/create-sale-order", saleController.createSaleOrder);
+
 module.exports = router;

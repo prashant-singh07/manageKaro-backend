@@ -50,6 +50,21 @@ const supplierQueries = {
     console.log("Data addSupplier", data);
     return data;
   },
+
+  async getSupplierById(supplierId) {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("id", supplierId)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Error getSupplierById", error);
+      return null;
+    }
+    console.log("Data getSupplierById", data);
+    return data;
+  },
 };
 
 module.exports = supplierQueries;

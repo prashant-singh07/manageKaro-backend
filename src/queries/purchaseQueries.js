@@ -47,6 +47,37 @@ const purchaseQueries = {
     console.log("Data createPurchaseItems", data);
     return data;
   },
+
+  async getAllPurchase(userId, shopId) {
+    const { data, error } = await supabase
+      .from("purchase")
+      .select("*")
+      .eq("created_id", userId)
+      .eq("shop_id", shopId);
+
+    if (error) {
+      console.log("Error getAllPurchase", error);
+      return null;
+    }
+
+    console.log("Data getAllPurchase", data);
+    return data;
+  },
+
+  async getPurchaseDetails(purchaseId) {
+    const { data, error } = await supabase
+      .from("purchase_items")
+      .select("*")
+      .eq("po_id", purchaseId);
+
+    if (error) {
+      console.log("Error getPurchaseDetails", error);
+      return null;
+    }
+
+    console.log("Data getPurchaseDetails", data);
+    return data;
+  },
 };
 
 module.exports = purchaseQueries;
